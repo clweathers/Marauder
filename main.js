@@ -65,7 +65,7 @@ class Track {
     draw() {
         push();
 
-        translate(this.position.x, this.position.y);
+        translate(this.position);
         rotate(this.angle);
 
         fill(0, this.alpha);
@@ -109,7 +109,7 @@ class Walker {
         if (this.should_draw_walker) {
             push();
 
-            translate(this.position.x, this.position.y);
+            translate(this.position);
             rotate(this.angle);
 
             fill(255);
@@ -131,9 +131,7 @@ class Walker {
             pop();
         }
 
-        for (const track of this.tracks) {
-            track.draw();
-        }
+        this.tracks.forEach((track) => track.draw());
     }
     
     update() {
@@ -144,12 +142,18 @@ class Walker {
     }
     
     update_angle() {
-        let target_vector = createVector(this.target.x - this.position.x, this.target.y - this.position.y);
+        let turn_speed = 0.05;
+
+        let target_vector = p5.Vector.sub(this.target, this.position);
         let target_vector_angle = target_vector.heading();
+        let angle_difference = abs(this.angle - target_vector_angle);
+
+        let turn_amount = min(turn_speed, angle_difference);
+
         if (this.angle > target_vector_angle) {
-            this.angle -= 0.05;
+            this.angle -= turn_amount;
         } else if (this.angle < target_vector_angle) {
-            this.angle += 0.05;
+            this.angle += turn_amount;
         }
     }
     
@@ -157,7 +161,6 @@ class Walker {
         let speed_vector = p5.Vector.fromAngle(this.angle);
         speed_vector.setMag(this.speed);
         this.position.add(speed_vector);
-        print(this.position);
     }
     
     update_tracks() {
@@ -198,8 +201,7 @@ class Walker {
         orthogonal_vector.setMag(track_spread);
 
         let track = new Track();
-        track.position.x = this.position.x + orthogonal_vector.x;
-        track.position.y = this.position.y + orthogonal_vector.y;
+        track.position = p5.Vector.add(this.position, orthogonal_vector);
         track.angle = this.angle;
         this.tracks.push(track);
 
