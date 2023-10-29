@@ -6,12 +6,14 @@ let previous_frame_millis = 0;
 let walker;
 
 function setup() {
+    createCanvas(windowWidth, windowHeight);
+
     walker = new Walker();
     walker.position.x = width / 2;
     walker.position.y = height / 2;
     walker.speed = 1.2;
+    walker.set_random_target();
 
-    createCanvas(windowWidth, windowHeight);
     canvas_updated();
 }
 
@@ -177,12 +179,16 @@ class Walker {
     
     update_target() {
         if (this.millis_since_last_target_change > 5000) {
-            this.target.x = random(width);
-            this.target.y = random(height);
+            this.set_random_target();
             this.millis_since_last_target_change = 0;
         }
 
         this.millis_since_last_target_change += millis_since_last_frame;
+    }
+
+    set_random_target() {
+        this.target.x = random(width);
+        this.target.y = random(height);
     }
     
     add_track() {
