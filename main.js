@@ -11,7 +11,7 @@ function setup() {
     walker = new Walker();
     walker.position.x = width / 2;
     walker.position.y = height / 2;
-    walker.speed = 1.2;
+    walker.speed = 2.6;
     walker.set_random_target();
 
     canvas_updated();
@@ -24,6 +24,9 @@ function draw() {
     
     walker.update();
     walker.draw();
+
+    // Debug
+    //drawDebugTracks();
 }
 
 function canvas_updated() {
@@ -53,39 +56,92 @@ function keyPressed() {
     }
 }
 
+// Side
+
+const Side = Object.freeze({
+    Left: false,
+    Right: true
+})
+
 // Track
 
 class Track {
     constructor() {
-        this.position = createVector(0, 0);
-        this.angle = 0;
         this.alpha = 255;
+        this.angle = 0;
+        this.position = createVector(0, 0);
+        this.side = Side.Left;
     }
 
     draw() {
         push();
 
+        fill(45, 13, 18, this.alpha);
+        noStroke();
+
         translate(this.position);
         rotate(this.angle);
 
-        fill(0, this.alpha);
-        noStroke();
+        // Mirror vertically for right-side tracks.
+        if (this.side == Side.Right) {
+            scale(1, -1);
+        }
 
-        ellipse(-6, 0, 7, 6);
-        ellipse(2, 0, 10, 9);
+        this.drawHeel();
+        translate(20, 0);
+        this.drawSole();
 
         pop();
     }
 
+    drawHeel() {
+        beginShape();
+
+        // "Real" points
+        curveVertex(6, 0);
+        curveVertex(7, 7);
+        curveVertex(0, 6);
+        curveVertex(-6, 3);
+        curveVertex(-7, 0);
+        curveVertex(-6, -3);
+        curveVertex(0, -6);
+        curveVertex(6, -6);
+
+        // Closing and guide points
+        curveVertex(6, 0);
+        curveVertex(7, 7);
+        curveVertex(0, 6);
+
+        endShape();
+    }
+
+    drawSole() {
+        beginShape();
+
+        // "Real" points
+        curveVertex(17, 0);
+        curveVertex(10, 9);
+        curveVertex(0, 11);
+        curveVertex(-8, 9);
+        curveVertex(-11, 0);
+        curveVertex(-8, -8);
+        curveVertex(0, -11);
+        curveVertex(8, -9);
+
+        // Closing and guide points
+        curveVertex(17, 0);
+        curveVertex(10, 9);
+        curveVertex(0, 11);
+
+        endShape();
+    }
+
     update() {
-        this.alpha -= (millis_since_last_frame / 15.0);
+        this.alpha -= (millis_since_last_frame / 9.0);
     }
 }
 
 // Walker
-
-const TRACK_SIDE_LEFT = true;
-const TRACK_SIDE_RIGHT = false;
 
 class Walker {
     constructor() {
@@ -100,7 +156,7 @@ class Walker {
 
         this.tracks = [];
 
-        this.last_track_side = TRACK_SIDE_LEFT;
+        this.last_track_side = Side.Left;
         this.should_draw_target = false;
         this.should_draw_target = false;
     }
@@ -196,17 +252,56 @@ class Walker {
     
     add_track() {
         let orthogonal_angle = this.angle + HALF_PI;
-        let track_spread = (this.last_track_side == TRACK_SIDE_LEFT ? -6 : 6);
+        let track_spread = (this.last_track_side == Side.Left ? -10 : 10);
         let orthogonal_vector = p5.Vector.fromAngle(orthogonal_angle);
         orthogonal_vector.setMag(track_spread);
 
         let track = new Track();
-        track.position = p5.Vector.add(this.position, orthogonal_vector);
         track.angle = this.angle;
+        track.position = p5.Vector.add(this.position, orthogonal_vector);
+        track.side = this.last_track_side;
         this.tracks.push(track);
 
         this.last_track_side = !this.last_track_side;
 
         this.millis_since_last_track = 0;
     }
+}
+
+// Debug
+
+// Draw a few variations of tracks to make it easier to tweak them.
+function drawDebugTracks() {
+    const up_angle = 3 * PI / 2;
+    const up_track_y = 100;
+    const zero_track_x = 200;
+
+    let test_left_up_track;
+    test_left_up_track = new Track();
+    test_left_up_track.angle = up_angle;
+    test_left_up_track.position.set(50, up_track_y);
+    test_left_up_track.side = Side.Left;
+
+    let test_left_zero_track;
+    test_left_zero_track = new Track();
+    test_left_zero_track.angle = 0;
+    test_left_zero_track.position.set(zero_track_x, 50);
+    test_left_zero_track.side = Side.Left;
+
+    let test_right_up_track;
+    test_right_up_track = new Track();
+    test_right_up_track.angle = up_angle;
+    test_right_up_track.position.set(100, up_track_y);
+    test_right_up_track.side = Side.Right;
+
+    let test_right_zero_track;
+    test_right_zero_track = new Track();
+    test_right_zero_track.angle = 0;
+    test_right_zero_track.position.set(zero_track_x, 100);
+    test_right_zero_track.side = Side.Right;
+
+    test_left_up_track.draw();
+    test_left_zero_track.draw();
+    test_right_up_track.draw();
+    test_right_zero_track.draw();
 }
